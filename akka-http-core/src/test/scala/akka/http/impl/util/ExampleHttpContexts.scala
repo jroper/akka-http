@@ -34,7 +34,7 @@ object ExampleHttpContexts {
     val context = SSLContext.getInstance("TLS")
     context.init(keyManagerFactory.getKeyManagers, null, new SecureRandom)
 
-    new HttpsConnectionContext(context)
+    new HttpsConnectionContext(() => context)
   }
 
   val exampleClientContext = {
@@ -51,7 +51,7 @@ object ExampleHttpContexts {
 
     val params = new SSLParameters()
     params.setEndpointIdentificationAlgorithm("https")
-    new HttpsConnectionContext(context, sslParameters = Some(params))
+    new HttpsConnectionContext(() => context, sslParameters = Some(params))
   }
 
   def resourceStream(resourceName: String): InputStream = {

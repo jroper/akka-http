@@ -21,12 +21,12 @@ object ConnectionContext {
   /** Used to serve HTTPS traffic. */
   def https(sslContext: SSLContext): HttpsConnectionContext = // ...
     //#https-context-creation
-    scaladsl.ConnectionContext.https(sslContext)
+    scaladsl.ConnectionContext.https(() => sslContext)
   //#https-context-creation
 
   /** Used to serve HTTPS traffic. */
   def https(
-    sslContext:          SSLContext,
+    sslContextProvider:  java.util.function.Supplier[SSLContext],
     sslConfig:           Optional[AkkaSSLConfig],
     enabledCipherSuites: Optional[JCollection[String]],
     enabledProtocols:    Optional[JCollection[String]],
@@ -34,13 +34,29 @@ object ConnectionContext {
     sslParameters:       Optional[SSLParameters]) = // ...
     //#https-context-creation
     scaladsl.ConnectionContext.https(
-      sslContext,
+      () => sslContextProvider.get,
       OptionConverters.toScala(sslConfig),
       OptionConverters.toScala(enabledCipherSuites).map(Util.immutableSeq(_)),
       OptionConverters.toScala(enabledProtocols).map(Util.immutableSeq(_)),
       OptionConverters.toScala(clientAuth),
-      OptionConverters.toScala(sslParameters),
-      scaladsl.UseHttp2.Negotiated)
+      OptionConverters.toScala(sslParameters))
+
+  /** Used to serve HTTPS traffic. */
+  // for binary compatibility, since 1.1.12
+  def https(
+    sslContext:          SSLContext,
+    sslConfig:           Optional[AkkaSSLConfig],
+    enabledCipherSuites: Optional[JCollection[String]],
+    enabledProtocols:    Optional[JCollection[String]],
+    clientAuth:          Optional[TLSClientAuth],
+    sslParameters:       Optional[SSLParameters]) = // ...
+    scaladsl.ConnectionContext.https(
+      () => sslContext,
+      OptionConverters.toScala(sslConfig),
+      OptionConverters.toScala(enabledCipherSuites).map(Util.immutableSeq(_)),
+      OptionConverters.toScala(enabledProtocols).map(Util.immutableSeq(_)),
+      OptionConverters.toScala(clientAuth),
+      OptionConverters.toScala(sslParameters))
 
   /** Used to serve HTTPS traffic. */
   // for binary-compatibility, since 2.4.7

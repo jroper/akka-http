@@ -26,14 +26,24 @@ object ConnectionContext {
   // ConnectionContext
   //#https-context-creation
   def https(
-    sslContext:          SSLContext,
+    sslContextProvider:  () => SSLContext,
     sslConfig:           Option[AkkaSSLConfig]         = None,
     enabledCipherSuites: Option[immutable.Seq[String]] = None,
     enabledProtocols:    Option[immutable.Seq[String]] = None,
     clientAuth:          Option[TLSClientAuth]         = None,
     sslParameters:       Option[SSLParameters]         = None) =
-    new HttpsConnectionContext(sslContext, sslConfig, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
+    new HttpsConnectionContext(sslContextProvider, sslConfig, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
   //#https-context-creation
+
+  @deprecated("This method is planned to disappear in 10.2.0", "10.1.12")
+  def https(
+    sslContext:          SSLContext,
+    sslConfig:           Option[AkkaSSLConfig],
+    enabledCipherSuites: Option[immutable.Seq[String]],
+    enabledProtocols:    Option[immutable.Seq[String]],
+    clientAuth:          Option[TLSClientAuth],
+    sslParameters:       Option[SSLParameters]) =
+    new HttpsConnectionContext(() => sslContext, sslConfig, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
 
   @deprecated("This method is planned to disappear in 10.2.0", "10.1.9")
   def https(
@@ -44,7 +54,7 @@ object ConnectionContext {
     clientAuth:          Option[TLSClientAuth],
     sslParameters:       Option[SSLParameters],
     http2:               UseHttp2) =
-    new HttpsConnectionContext(sslContext, sslConfig, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
+    new HttpsConnectionContext(() => sslContext, sslConfig, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
 
   // for bincompat
   @deprecated("This method is planned to disappear in 10.2.0", "10.1.9")
@@ -63,13 +73,23 @@ object ConnectionContext {
 }
 
 final class HttpsConnectionContext(
-  val sslContext:          SSLContext,
+  sslContextProvider:      () => SSLContext,
   val sslConfig:           Option[AkkaSSLConfig]         = None,
   val enabledCipherSuites: Option[immutable.Seq[String]] = None,
   val enabledProtocols:    Option[immutable.Seq[String]] = None,
   val clientAuth:          Option[TLSClientAuth]         = None,
   val sslParameters:       Option[SSLParameters]         = None)
   extends akka.http.javadsl.HttpsConnectionContext with ConnectionContext {
+
+  @deprecated("This constructor is planned to disappear in 10.2.0", "10.1.12")
+  def this(
+    sslContext:          SSLContext,
+    sslConfig:           Option[AkkaSSLConfig],
+    enabledCipherSuites: Option[immutable.Seq[String]],
+    enabledProtocols:    Option[immutable.Seq[String]],
+    clientAuth:          Option[TLSClientAuth],
+    sslParameters:       Option[SSLParameters]) =
+    this(() => sslContext, sslConfig, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
 
   @deprecated("This constructor is planned to disappear in 10.2.0", "10.1.9")
   def this(
@@ -91,9 +111,10 @@ final class HttpsConnectionContext(
     sslParameters:       Option[SSLParameters]) =
     this(sslContext, sslConfig = None, enabledCipherSuites, enabledProtocols, clientAuth, sslParameters, http2 = Negotiated)
 
+  def sslContext: SSLContext = sslContextProvider()
   def firstSession = NegotiateNewSession(enabledCipherSuites, enabledProtocols, clientAuth, sslParameters)
 
-  override def getSslContext = sslContext
+  override def getSslContext = sslContextProvider()
   override def getEnabledCipherSuites: Optional[JCollection[String]] = enabledCipherSuites.map(_.asJavaCollection).asJava
   override def getEnabledProtocols: Optional[JCollection[String]] = enabledProtocols.map(_.asJavaCollection).asJava
   override def getClientAuth: Optional[TLSClientAuth] = clientAuth.asJava

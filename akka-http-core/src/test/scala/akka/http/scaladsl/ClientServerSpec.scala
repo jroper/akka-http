@@ -632,7 +632,7 @@ Host: example.com
       // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as akka.example.org
       val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
       val sslConfig = AkkaSSLConfig().withSettings(sslConfigSettings)
-      val clientConnectionContext = ConnectionContext.https(ExampleHttpContexts.exampleClientContext.sslContext, Some(sslConfig))
+      val clientConnectionContext = ConnectionContext.https(() => ExampleHttpContexts.exampleClientContext.sslContext, Some(sslConfig))
 
       val entity = Array.fill[Char](999999)('0').mkString + "x"
       val routes: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { _ => HttpResponse(entity = entity) }

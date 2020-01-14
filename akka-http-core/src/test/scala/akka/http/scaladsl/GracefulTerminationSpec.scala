@@ -191,7 +191,7 @@ class GracefulTerminationSpec
     // Disable hostname verification as ExampleHttpContexts.exampleClientContext sets hostname as akka.example.org
     val sslConfigSettings = SSLConfigSettings().withLoose(SSLLooseConfig().withDisableHostnameVerification(true))
     val sslConfig = AkkaSSLConfig().withSettings(sslConfigSettings)
-    val clientConnectionContext = ConnectionContext.https(ExampleHttpContexts.exampleClientContext.sslContext, Some(sslConfig))
+    val clientConnectionContext = ConnectionContext.https(() => ExampleHttpContexts.exampleClientContext.sslContext, Some(sslConfig))
 
     val serverQueue = new ArrayBlockingQueue[(HttpRequest, Promise[HttpResponse])](16)
 
